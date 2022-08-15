@@ -1,0 +1,124 @@
+---
+title: "Assignment 3"
+author: "Simar"
+date: '2022-08-12'
+output: html_document
+---
+
+```{r}
+library("dplyr")
+library("tidyverse")
+library("ggplot2")
+library(usmap)
+
+
+filename <- "https://raw.githubusercontent.com/vera-institute/incarceration-trends/master/incarceration_trends.csv"
+incarceration_trends <- read.csv(filename, header = T, stringsAsFactors = F)
+View(incarceration_trends)
+
+```
+In this chunk of code we have the dataset being loaded and used. 
+
+```{r}
+highest_incarceration_state <- incarceration_trends %>%
+  group_by(state) %>%
+  summarise(total_pop = sum(total_jail_pop, na.rm = T)) %>%
+  filter(total_pop == max(total_pop)) %>%
+  pull(state)
+highest_incarceration_state
+```
+This first variable is to attest for the states that had the highest incarceration rates
+
+```{r}
+highest_county_pop <- incarceration_trends %>%
+  group_by(county_name) %>%
+  summarise(total = sum(total_pop)) %>%
+  filter(total == max(total)) %>%
+  pull(county_name)
+highest_county_pop
+
+```
+
+
+```{r}
+white_fem_pop <- sum(incarceration_trends$white_female_prison_pop, na.rm = T)
+black_fem_pop <- sum(incarceration_trends$black_female_prison_pop, na.rm = T)
+aapi_fem_pop <- sum(incarceration_trends$aapi_female_prison_pop, na.rm = T)
+native_fem_pop <- sum(incarceration_trends$native_female_prison_pop, na.rm = T)
+latinx_fem_pop <- sum(incarceration_trends$latinx_female_prison_pop, na.rm = T)
+other_fem_pop <- sum(incarceration_trends$other_race_female_prison_pop, na.rm = T)
+female_races <- c(white_fem_pop, black_fem_pop, aapi_fem_pop, native_fem_pop, latinx_fem_pop, other_fem_pop)
+data <- data.frame(female_races = c("White Female","Black Female", "AAPI Female", "Native Female", "Latinx Female", "Other Female"),
+                   pop = c(white_fem_pop, black_fem_pop, aapi_fem_pop, native_fem_pop, latinx_fem_pop, other_fem_pop))
+highest_female_jail_pop <- data %>%
+  filter(pop == max(pop)) %>%
+  pull(female_races)
+highest_female_jail_pop
+```
+
+```{r}
+state_low_jail_pop <- incarceration_trends %>%
+  group_by(state) %>%
+  filter(year == 2014) %>%
+  summarize(total_jail = sum(total_jail_pop, na.rm = T)) %>%
+  filter(total_jail == min(total_jail, na.rm = T)) %>%
+  pull(state)
+
+state_low_jail_pop 
+```
+
+
+```{r}
+total_incarceration_WA <- incarceration_trends %>% 
+  filter(state == "WA") %>% 
+  group_by(year) %>% 
+  select(year, aapi_jail_pop, black_jail_pop, native_jail_pop, white_jail_pop, total_jail_pop) %>% 
+  na.omit()
+
+total_incarceration_WA
+
+```
+
+
+
+```{r}
+na_incarceration<- incarceration_trends %>% group_by(year) %>% select(year, native_jail_pop) %>%
+  gather(key = race, value = population, -year, na.rm = TRUE) %>% group_by(year, race) %>% summarise(population = sum(population))
+na_incarceration$race <- na_incarceration$race %>%  factor(levels = c("native_jail_pop"))
+native_jail_pop_time <- ggplot(na_incarceration)+
+  geom_col(mapping = aes(x = year, y = population, fill = race), position = "dodge") +
+  scale_alpha_continuous(5, 10) +
+  labs(title = "Native Jail Population Over Time", x = "year", y = "total incarcerations", fill = "incarcerations")
+native_jail_pop_time
+```
+
+```{r}
+latinx_male_vs_white_male <- incarceration_trends %>%
+  group_by(state) %>%
+  filter(year == 2000) %>% 
+  summarize(latinx_male_prison_pop = mean(latinx_male_prison_pop, na.rm = T),
+            white_male_prison_pop = mean(white_male_prison_pop, na.rm = T)) %>% 
+  na.omit()
+latinx_male_vs_white_male_plot <- ggplot(latinx_male_vs_white_male, aes(x = latinx_male_prison_pop,
+                                                      y = white_male_prison_pop)) +
+  geom_line(color = "red") + labs(title = "LatinX vs. White Male Jail Pop", x = "Latinx Male Pop", 
+                                             y = "White Male Pop")
+latinx_male_vs_white_male_plot
+
+
+## scatter plots
+```
+
+
+```{r}
+black_map <- incarceration_trends %>%
+  select(year, state, black_jail_pop) %>%
+  group_by(state) %>%
+  filter(year == 2010) %>% 
+  summarize(black_jail_pop = sum(black_jail_pop, na.rm = T))
+us_map <- plot_usmap(data = black_map, values = "black_jail_pop", color = "white") + 
+  labs(title = "Black People Incarcerated by State") +
+  scale_fill_continuous(name = "Number of Incarcerations")
+us_map
+
+```
