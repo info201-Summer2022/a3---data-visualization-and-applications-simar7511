@@ -100,12 +100,10 @@ latinx_male_vs_white_male <- incarceration_trends %>%
             white_male_prison_pop = mean(white_male_prison_pop, na.rm = T)) %>% 
   na.omit()
 latinx_male_vs_white_male_plot <- ggplot(latinx_male_vs_white_male, aes(x = latinx_male_prison_pop,
-                                                      y = white_male_prison_pop)) +
-  geom_line(color = "red") + labs(title = "LatinX vs. White Male Jail Pop", x = "Latinx Male Pop", 
+                                                   y = white_male_prison_pop)) +
+  geom_point(color = "red") + labs(title = "LatinX vs. White Male Jail Pop", x = "Latinx Male Pop", 
                                              y = "White Male Pop")
 latinx_male_vs_white_male_plot
-
-
 ## scatter plots
 ```
 
